@@ -1,0 +1,9 @@
+# 실제 운영 데이터(IP, 계정, 테넌트)가 들어간 엑셀은 올리지 않음
+*.xlsx
+!inventory/example*.xlsx
+~$*
+__pycache__/
+*.pyc
+aci-automation.zip
+# 폐쇄망용 모듈 묶음 (pip install --target lib 로 직접 만듦)
+lib/

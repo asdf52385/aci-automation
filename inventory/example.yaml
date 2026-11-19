@@ -1,0 +1,57 @@
+# ACI 자동화 입력 양식 (예시)
+# - 이름 규칙: 영문/숫자/_ . : - 만, 최대 64자 (APIC 규칙)
+# - 비밀번호는 파일에 적지 말고 환경변수 APIC_PASSWORD 로 넘기는 것을 권장
+
+apic:
+  host: https://apic.example.local   # APIC 주소
+  username: admin
+  # password: ...                    # 생략하면 APIC_PASSWORD 환경변수 사용
+  verify_ssl: false                  # 사설 인증서면 false
+  timeout: 30
+
+tenants:
+  - name: TN-PROD
+    description: 운영 테넌트
+
+    vrfs:
+      - name: VRF-PROD
+        enforce: true                # true=enforced, false=unenforced (pcEnfPref)
+
+    bds:
+      - name: BD-WEB
+        vrf: VRF-PROD                # 같은 테넌트의 VRF 이름 (common 테넌트 VRF면 vrf_tenant: common 추가)
+        unicast_routing: true
+        arp_flooding: false
+        l2_unknown_unicast: proxy    # proxy | flood
+        subnets:
+          - ip: 10.10.10.1/24        # 게이트웨이 IP/마스크
+            scope: [public]          # private | public | shared 조합
+      - name: BD-DB
+        vrf: VRF-PROD
+        subnets:
+          - ip: 10.10.20.1/24
+            scope: [private]
+
+    contracts:
+      - name: CT-WEB-DB
+        scope: context               # context | tenant | global | application-profile
+        filters: [default]           # 자기 테넌트에 없으면 common/default
+
+    app_profiles:
+      - name: AP-SHOP
+        epgs:
+          - name: EPG-WEB
+            bd: BD-WEB
+            consume: [CT-WEB-DB]
+            # domains: [phys_dom]    # Physical Domain
+            # static_paths:
+            #   - {node: 101, port: eth1/1, vlan: 10, mode: regular}  # regular | untagged | native
+          - name: EPG-DB
+            bd: BD-DB
+            provide: [CT-WEB-DB]
+
+    # ---- 3단계: L3Out (다음 단계에서 구현, 양식만 예약) ----
+    l3outs: []
+
+    # ---- 4단계: 새 Filter 생성 (다음 단계, 양식만 예약) ----
+    filters: []
